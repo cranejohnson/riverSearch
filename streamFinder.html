@@ -1,0 +1,373 @@
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+<link rel="stylesheet" href="http://mrmufflon.github.io/Leaflet.Coordinates/dist/Leaflet.Coordinates-0.1.3.css"/>
+<script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.0.4/dist/MarkerCluster.css"/>
+<script src="https://unpkg.com/leaflet.icon.glyph@latest"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.0.4/dist/MarkerCluster.Default.css"/>
+<link rel="stylesheet" href="http://azavea.github.io/Leaflet.zoomdisplay/css/leaflet.zoomdisplay.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.0.4/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/esri-leaflet@2.0.8"></script>
+<script src="http://azavea.github.io/Leaflet.zoomdisplay/js/leaflet.zoomdisplay.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.4.3/proj4.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4leaflet/1.0.1/proj4leaflet.min.js"></script>
+<script src="http://mrmufflon.github.io/Leaflet.Coordinates/dist/Leaflet.Coordinates-0.1.3.min.js"></script>
+<script src="https://www.weather.gov/source/aprfc/js/esri2geojson.js"></script>
+
+
+
+
+<style>
+.maincontainer {
+    width: 900px;
+    background: grey;
+    margin: auto;
+    padding: 10px;
+}
+
+.center{
+    text-align: center;
+}
+
+
+.map {
+    height: 300px;
+    width: 400px;
+}
+
+#mapid {
+    height   : 700px;
+    width    : 100%;
+    margin   : 0px;
+    padding  : 0px;
+    overflow : hidden;
+},
+
+</style>
+<script>
+
+var layersByName = {};
+
+function findStreamByName(name,map){
+
+    $('#loading-image').show();
+    //var bounds = map.getBounds();
+    var corner1 = L.latLng(50, -170),
+        corner2 = L.latLng(75, -132),
+        bounds = L.latLngBounds(corner1, corner2);
+
+    var nhdUrl = 'https://services.nationalmap.gov/arcgis/rest/services/nhd/mapserver/9/query';
+    var streamURL = 'https://txpub.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/1/query';
+    var params = {
+        //where: 'upper(GNIS_NAME) like upper(\'%'+name+'%\')',
+        where: 'upper(Name) like upper(\'%'+name+'%\')',
+        geometry:'esriGeometryEnvelope&geometry='+bounds.getEast()+','+bounds.getSouth()+','+bounds.getWest()+','+bounds.getNorth(),
+        geometryType:'esriGeometryEnvelope',
+        inSR:4326,
+        spatialRel:'esriSpatialRelIntersects',
+        returnGeometry:true,
+        returnTrueCurves:false,
+        geometryPrecision:1,
+        outSR:3857,
+        returnIdsOnly:false,
+        returnCountOnly:true,
+        returnZ:false,
+        returnM:false,
+        returnDistinctValues:false,
+        //f:'geojson'
+        f:'json'
+        }
+
+    $.ajax({
+        type: "GET",
+        url: streamURL,
+        data: params,
+        dataType: "json",
+        success: function (data) {
+            $('#foundRivers').html(' Reaches Found:'+data.count);
+        }
+    });
+
+    params.returnCountOnly = false;
+    var flowLines = {"type":"FeatureCollection",
+                        "features":[],
+                        "crs":{
+                            "type": "name",
+                            "properties": {
+                                "name": "EPSG:3857"
+                            }
+                        }
+                    }
+
+    var myStyle = {
+        "color": "green",
+        "weight": 5,
+    };
+    if(typeof(layersByName['streamNameLayer'] ) != 'undefined'){
+        map.removeLayer(layersByName['streamNameLayer']);
+        mapControl.removeLayer(layersByName['streamNameLayer']);
+    }
+     $.ajax({
+            type: "GET",
+            url: streamURL,
+            data: params,
+            dataType: "json",
+            success: function (data) {
+
+                $.each(data.features,function(){
+                    var geoJSON = arcgisToGeoJSON(this);
+                    flowLines.features.push(geoJSON);
+                });
+                var markers = L.Proj.geoJson(flowLines, {
+                    style: myStyle,
+                    onEachFeature: function (feature, layer) {
+                        var popupcontent = "";
+                        $.each(feature.properties,function(k,v){
+                            popupcontent = popupcontent + "<span style='font-weight:bold'>"+k+": </span>"+v+"<br>";
+                        });
+                        layer.bindPopup(popupcontent);
+
+                        }
+                });
+                //console.log(markers.getBounds());
+                map.addLayer(markers);
+                layersByName['streamNameLayer'] = markers;
+                var group = new L.featureGroup(markers);
+                console.log(group.getBounds());
+
+                var layers = markers.getLayers();
+                //layers[0].openPopup();
+                map.fitBounds(markers.getBounds());
+                mapControl.addOverlay(markers, "Named Stream Reaches");
+
+            },
+            error: function (request, status, errorThrown) {
+                console.log(status);
+            },
+            complete: function(){
+                $('#loading-image').hide();
+            }
+        });
+}
+
+function streamer(lat,lon){
+
+    var dest = new proj4.Proj('EPSG:3857');
+    var point = proj4(dest,[lon,lat]);
+
+
+    var ht = 315*100;     //imageDisplay x 100 = each pixel 100 meters
+    var wd = 1370*100;    //imageDisplay x 100 = each pixel 100 meters
+
+    var params = {
+        tolerance : 1,
+        returnGeometry : false,
+        geometryType : 'esriGeometryPoint',
+        mapExtent : (point[0]-wd)+','+(point[1]-ht)+','+(point[0]+wd)+','+(point[1]+ht),
+        imageDisplay : '1370,315,1',
+        f : 'json',
+        sr : 102100,
+        layers: 'all:1',
+        //layers: 'all:15',
+        geometry: '{ "x" : '+point[0]+', "y" : '+point[1]+' }'
+    };
+    var flowLines = {"type":"FeatureCollection",
+                        "features":[],
+                        "crs":{
+                            "type": "name",
+                            "properties": {
+                                "name": "EPSG:3857"
+                            }
+                        }
+                    }
+    var myStyle = {
+        "color": "#00008B",
+        "weight": 5,
+        "opacity": 0.65
+    };
+    if(typeof(layersByName['reachLayer'] ) != 'undefined'){
+        map.removeLayer(layersByName['reachLayer']);
+    }
+    var i;
+    var foundOne = false;
+    for(i =1;i<100;i++){
+
+        params.tolerance = i;
+        $.ajax({
+            type: "GET",
+            async:false,
+            //url: "https://services.nationalmap.gov/arcgis/rest/services/nhd/mapserver/identify",
+            url: "https://txpub.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/identify",
+            data: params,
+            contentType: "application/json; charset=utf-8",
+            headers : {'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'},
+            dataType: "json",
+            success: function (data) {
+                console.log(data.results.length);
+                if(data.results.length > 0) {
+                    foundOne = true;
+                }
+            }
+        })
+        if(foundOne) break;
+     }
+
+    params.returnGeometry = true;
+     $.ajax({
+            type: "GET",
+            //url: "https://services.nationalmap.gov/arcgis/rest/services/nhd/mapserver/identify",
+            url: "https://txpub.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/identify",
+            data: params,
+            contentType: "application/json; charset=utf-8",
+            headers : {'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'},
+            dataType: "json",
+            success: function (data) {
+                $.each(data.results,function(){
+                    var geoJSON = arcgisToGeoJSON(this);
+                    console.log(geoJSON);
+                    flowLines.features.push(geoJSON);
+                });
+
+            var markers = L.Proj.geoJson(flowLines, {
+                style: myStyle,
+                onEachFeature: function (feature, layer) {
+                    var popupcontent = "";
+                    $.each(feature.properties,function(k,v){
+                        popupcontent = popupcontent + "<span style='font-weight:bold'>"+k+": </span>"+v+"<br>";
+                    });
+                    layer.bindPopup(popupcontent);
+
+                }
+            });
+            map.addLayer(markers);
+            layersByName['reachLayer'] = markers;
+
+
+            var layers = markers.getLayers();
+            layers[0].openPopup();
+            //mapControl.addOverlay(markers, "Local Flow Lines");
+            },
+            error: function (request, status, errorThrown) {
+                console.log(status);
+            }
+        });
+
+}
+
+function getHUC(lat,lon){
+
+    var dest = new proj4.Proj('EPSG:3857');
+    var point = proj4(dest,[lon,lat]);
+
+
+    var ht = 315*100;     //imageDisplay x 100 = each pixel 100 meters
+    var wd = 1370*100;    //imageDisplay x 100 = each pixel 100 meters
+
+    var params = {
+        tolerance : 0,
+        returnGeometry : false,
+        geometryType : 'esriGeometryPoint',
+        //async:false,
+        mapExtent : (point[0]-wd)+','+(point[1]-ht)+','+(point[0]+wd)+','+(point[1]+ht),
+        imageDisplay : '1370,315,1',
+        f : 'json',
+        sr : 102100,
+        layers: 'all:5,6',
+        geometry: '{ "x" : '+point[0]+', "y" : '+point[1]+' }'
+    };
+
+    $('#siteInfo').append('Loading HUC codes.......');
+     $.ajax({
+            type: "GET",
+            url: "https://services.nationalmap.gov/arcgis/rest/services/nhd/mapserver/identify",
+            data: params,
+            contentType: "application/json; charset=utf-8",
+            headers : {'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'},
+            dataType: "json",
+            success: function (data) {
+                $('#siteInfo').empty();
+
+                $('#siteInfo').append('Lat: '+lat+'<br>Lon: '+lon+'<br>');
+                $.each(data.results,function(){
+                    var huc = this.layerId*2;
+                    $('#siteInfo').append(this.layerName+': '+this.value+' '+this.attributes['HUC'+huc]+'<br>');
+                });
+                },
+                error: function (request, status, errorThrown) {
+                    console.log(status);
+                }
+        });
+
+}
+
+</script>
+
+    <div class = 'center'>
+        <h3>Search for your River in Alaska</h3>
+        <div id="loading-image" style="display:none;width:69px;height:89px;border:1px solid black;position:relative;top:10%;left:50%;padding:2px;border:10px"><img src='https://www.w3schools.com/jquery/demo_wait.gif' width="64" height="64" /><br>Loading..</div>
+        Search for River:<input type="text" id="riverSearch"><button type="button" onclick ="findStreamByName($('#riverSearch').val(),map);">Find Rivers</button><span id="foundRivers"></span><br>
+        <p><i>Text above is matched to river names in the USGS 1:1,000,000 river dataset.  Check and see how many Fish or Beaver Creeks exist in Alaska!</i></p>
+        <p><i>Use the cross hairs to click on a river reach to identify in the map below</i></p>
+    </div>
+    <div class="maincontainer">
+        <div id="mapid"></div>
+    </div>
+ <script>
+
+
+var nhdLargeFlow = L.tileLayer('https://services.nationalmap.gov/arcgis/services/nhd/MapServer/WMSServer?',{
+    layers : '3',
+    version : '1.3.0'
+    });
+
+var esriTopo = L.esri.basemapLayer("Topographic");
+var usgsTopo =   L.esri.tiledMapLayer({
+    url: "https://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer"
+  });
+
+
+var worldTerrain  =  L.tileLayer( "https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}" );
+var oceanLayer    =  L.tileLayer( "https://txpub.usgs.gov/arcgis/rest/services/Mapping/Ocean/MapServer/tile/{z}/{y}/{x}",{"maxNativeZoom":11} );
+var hydroTerrain  =  L.tileLayer( "https://txpub.usgs.gov/arcgis/rest/services/Mapping/HydroBaseMapForTerrain/MapServer/tile/{z}/{y}/{x}",{"maxNativeZoom":11} );
+var hydroMask     =  L.tileLayer( "https://txpub.usgs.gov/arcgis/rest/services/Mapping/Mask/MapServer/tile/{z}/{y}/{x}", {"opacity":0.2,"maxNativeZoom":11} );
+var Esri_WorldImagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+});
+
+var hydroBase = L.layerGroup([worldTerrain, hydroTerrain, hydroMask]);
+
+// create map with ESRI World Terrain Base, Streamer Ocean, Streamer HydroBaseMapForTerrain, and Streamer Mask layers
+map = new L.Map( "mapid", {
+    "minZoom" : 4,
+   // "maxZoom" : 11,
+    "layers"  : [Esri_WorldImagery,esriTopo,usgsTopo,hydroBase],
+    "center"  : new L.LatLng(65,-150),
+    "zoom"    : 4,
+    "attributionControl" : false
+});
+
+var baseMaps = {
+    "World Imagery" : Esri_WorldImagery,
+    "Topography" : esriTopo,
+    "USGS Maps" : usgsTopo,
+    "Hydrography" : hydroBase,
+};
+
+var mapControl = L.control.layers(baseMaps,null).addTo(map);
+L.control.coordinates(
+    {labelTemplateLat:"Lat: {y}",
+	labelTemplateLng:"Lon: {x}"}).addTo(map);
+console.log('Built map');
+
+$('.leaflet-container').css('cursor','crosshair');
+
+map.on('click', function(e) {
+        streamer(e.latlng.lat,e.latlng.lng);
+    });
+
+</script>
+
