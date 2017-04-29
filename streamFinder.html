@@ -129,11 +129,9 @@ function findStreamByName(name,map){
 
                         }
                 });
-                //console.log(markers.getBounds());
                 map.addLayer(markers);
                 layersByName['streamNameLayer'] = markers;
                 var group = new L.featureGroup(markers);
-                console.log(group.getBounds());
 
                 var layers = markers.getLayers();
                 //layers[0].openPopup();
@@ -201,7 +199,6 @@ function getHUC(lat,lon){
             success: function (data) {
                 $.each(data.results,function(){
                     var geoJSON = arcgisToGeoJSON(this);
-                    console.log(geoJSON);
                     flowLines.features.push(geoJSON);
                 });
 
@@ -287,7 +284,6 @@ function streamer(lat,lon){
             headers : {'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'},
             dataType: "json",
             success: function (data) {
-                console.log(data.results.length);
                 if(data.results.length > 0) {
                     foundOne = true;
                 }
@@ -308,7 +304,6 @@ function streamer(lat,lon){
             success: function (data) {
                 $.each(data.results,function(){
                     var geoJSON = arcgisToGeoJSON(this);
-                    console.log(geoJSON);
                     flowLines.features.push(geoJSON);
                 });
 
@@ -396,11 +391,12 @@ var mapControl = L.control.layers(baseMaps,null).addTo(map);
 L.control.coordinates(
     {labelTemplateLat:"Lat: {y}",
 	labelTemplateLng:"Lon: {x}"}).addTo(map);
-console.log('Built map');
+
 
 $('.leaflet-container').css('cursor','crosshair');
 
 map.on('click', function(e) {
+        $('#loading-image').show();
         if(typeof(layersByName['pointLayer'] ) != 'undefined'){
             map.removeLayer(layersByName['pointLayer']);
         }
@@ -408,6 +404,8 @@ map.on('click', function(e) {
         layersByName['pointLayer'] = newMarker;
         streamer(e.latlng.lat,e.latlng.lng);
         getHUC(e.latlng.lat,e.latlng.lng);
+        $('#loading-image').hide();
+
     });
 
 </script>
