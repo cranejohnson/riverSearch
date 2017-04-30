@@ -46,10 +46,17 @@
 </style>
 <script>
 
+$('#loading-image').bind('ajaxStart', function(){
+    $(this).show();
+}).bind('ajaxStop', function(){
+    $(this).hide();
+});
+
+
 var layersByName = {};
 
-function findStreamByName(name,map){
-
+function findStreamByName(name,matchType,map){
+    console.log(matchType);
     $('#loading-image').show();
     //var bounds = map.getBounds();
     var corner1 = L.latLng(50, -170),
@@ -58,9 +65,11 @@ function findStreamByName(name,map){
 
     var nhdUrl = 'https://services.nationalmap.gov/arcgis/rest/services/nhd/mapserver/9/query';
     var streamURL = 'https://txpub.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/1/query';
+    var whereStatement = 'upper(Name) like upper(\'%'+name+'%\')';
+    if(matchType == 'exact') whereStatement = 'upper(Name) = upper(\''+name+'\')';
     var params = {
         //where: 'upper(GNIS_NAME) like upper(\'%'+name+'%\')',
-        where: 'upper(Name) like upper(\'%'+name+'%\')',
+        where: whereStatement,
         geometry:'esriGeometryEnvelope&geometry='+bounds.getEast()+','+bounds.getSouth()+','+bounds.getWest()+','+bounds.getNorth(),
         geometryType:'esriGeometryEnvelope',
         inSR:4326,
@@ -113,7 +122,7 @@ function findStreamByName(name,map){
             data: params,
             dataType: "json",
             success: function (data) {
-
+                if(data.features.length==0) return true;
                 $.each(data.features,function(){
                     var geoJSON = arcgisToGeoJSON(this);
                     flowLines.features.push(geoJSON);
@@ -162,7 +171,6 @@ function getHUC(lat,lon){
         tolerance : 0,
         returnGeometry : true,
         geometryType : 'esriGeometryPoint',
-        async:false,
         mapExtent : (point[0]-wd)+','+(point[1]-ht)+','+(point[0]+wd)+','+(point[1]+ht),
         imageDisplay : '1370,315,1',
         f : 'json',
@@ -338,7 +346,8 @@ function streamer(lat,lon){
     <div class = 'center'>
         <h3>Search for your River or Watershed in Alaska</h3>
         <div id="loading-image" style="display:none;width:69px;height:89px;border:1px solid black;position:relative;top:10%;left:50%;padding:2px;border:10px"><img src='https://www.w3schools.com/jquery/demo_wait.gif' width="64" height="64" /><br>Loading..</div>
-        Search for River:<input type="text" id="riverSearch"><button type="button" onclick ="findStreamByName($('#riverSearch').val(),map);">Find Rivers</button><span id="foundRivers"></span><br>
+        Search for River:<input type="text" id="riverSearch"><button type="button" onclick ="findStreamByName($('#riverSearch').val(),$('input[name=searchType]:checked').val(),map);">Find Rivers</button><span id="foundRivers"></span><br>
+        <input type="radio" name="searchType" value="includes" checked>Includes<input type="radio" name="searchType" value="exact">Exact Match<br>
         <p><i>Text above is matched to river names in the USGS 1:1,000,000 river dataset.  Check and see how many Fish or Beaver Creeks exist in Alaska!</i></p>
         <p><i>Use the cross hairs to click a point and find the nearest river reach and HUC 6,8,10 basins</i></p>
         <button type="button" onclick ="$.each(layersByName,function(k,v){map.removeLayer(v);mapControl.removeLayer(v);});">Clear Map</button>
@@ -376,7 +385,7 @@ map = new L.Map( "mapid", {
    // "maxZoom" : 11,
     "layers"  : [Esri_WorldImagery,esriTopo,usgsTopo,hydroBase],
     "center"  : new L.LatLng(65,-150),
-    "zoom"    : 4,
+    "zoom"    : 5,
     "attributionControl" : false
 });
 
@@ -395,8 +404,15 @@ L.control.coordinates(
 
 $('.leaflet-container').css('cursor','crosshair');
 
+function checkVisible(elm) {
+  var rect = elm.getBoundingClientRect();
+  var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+  return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+}
+
 map.on('click', function(e) {
         $('#loading-image').show();
+
         if(typeof(layersByName['pointLayer'] ) != 'undefined'){
             map.removeLayer(layersByName['pointLayer']);
         }
@@ -404,8 +420,8 @@ map.on('click', function(e) {
         layersByName['pointLayer'] = newMarker;
         streamer(e.latlng.lat,e.latlng.lng);
         getHUC(e.latlng.lat,e.latlng.lng);
+        console.log('Hide Loading image');
         $('#loading-image').hide();
-
     });
 
 </script>
