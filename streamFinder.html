@@ -46,18 +46,20 @@
 </style>
 <script>
 
-$('#loading-image').bind('ajaxStart', function(){
-    $(this).show();
-}).bind('ajaxStop', function(){
-    $(this).hide();
+$( document ).ajaxStart(function() {
+    jQuery("#loading-image").css('visibility', 'visible');
 });
 
 
 var layersByName = {};
 
 function findStreamByName(name,matchType,map){
-    console.log(matchType);
-    $('#loading-image').show();
+
+    $.each(layersByName,function(k,v){
+        map.removeLayer(v);
+        mapControl.removeLayer(v);
+    });
+    jQuery("#loading-image").css('visibility', 'visible');
     //var bounds = map.getBounds();
     var corner1 = L.latLng(50, -170),
         corner2 = L.latLng(75, -132),
@@ -152,7 +154,7 @@ function findStreamByName(name,matchType,map){
                 console.log(status);
             },
             complete: function(){
-                $('#loading-image').hide();
+                    jQuery("#loading-image").css('visibility', 'hidden');
             }
         });
 }
@@ -196,11 +198,11 @@ function getHUC(lat,lon){
         map.removeLayer(layersByName['wbdLayer']);
     }
 
+    var showInfo = ['AREASQKM','NAME','HUC10','HUC6','HUC8'];
      $.ajax({
             type: "GET",
             url: "https://services.nationalmap.gov/arcgis/rest/services/wbd/MapServer/identify",
             data: params,
-            async:false,
             contentType: "application/json; charset=utf-8",
             headers : {'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'},
             dataType: "json",
@@ -211,30 +213,36 @@ function getHUC(lat,lon){
                 });
 
                 var markers = L.Proj.geoJson(flowLines, {
-                style: myStyle,
-                onEachFeature: function (feature, layer) {
-                    var popupcontent = "";
-                    $.each(feature.properties,function(k,v){
-                        popupcontent = popupcontent + "<span style='font-weight:bold'>"+k+": </span>"+v+"<br>";
-                    });
-
-                    layer.bindPopup(popupcontent);
-
-                }
-            });
-            map.addLayer(markers);
-            layersByName['wbdLayer'] = markers;
-
-
+                    style: myStyle,
+                    onEachFeature: function (feature, layer) {
+                        var popupcontent = "<h4>Information from  National Map WBD</h4>";
+                        var secondaryContent = ""
+                        $.each(feature.properties,function(k,v){
+                            if(showInfo.indexOf(k)>=0){
+                                popupcontent = popupcontent + "<span style='font-weight:bold'>"+k+": </span>"+v+"<br>";
+                            }
+                            else{
+                                secondaryContent = secondaryContent + "<span class='moreInfo' style='font-weight:italic;display:none'>"+k+": "+v+"<br></span>";
+                            }
+                        });
+                        popupcontent = popupcontent + secondaryContent+'<button onclick="$(\'.moreInfo\').show();">Click for More Info</button>';
+                        layer.bindPopup(popupcontent);
+                        }
+                });
+                map.addLayer(markers);
+                layersByName['wbdLayer'] = markers;
                 $.each(data.results,function(){
                     huc = (this.layerId-1)*2;
                     $('#siteInfo').append(this.layerName+': '+this.value+' '+this.attributes['HUC'+huc]+'<br>');
                     results[huc] = this.layerName+': '+this.value+' '+this.attributes['HUC'+huc];
                 });
-                },
-                error: function (request, status, errorThrown) {
-                    console.log(status);
+                if(typeof(layersByName['reachLayer'] ) != 'undefined'){
+                    layersByName['reachLayer'].bringToFront();
                 }
+            },
+            error: function (request, status, errorThrown) {
+                console.log(status);
+            }
         });
     return results;
 }
@@ -250,7 +258,7 @@ function streamer(lat,lon){
 
     var params = {
         tolerance : 1,
-        returnGeometry : false,
+        returnGeometry : true,
         geometryType : 'esriGeometryPoint',
         mapExtent : (point[0]-wd)+','+(point[1]-ht)+','+(point[0]+wd)+','+(point[1]+ht),
         imageDisplay : '1370,315,1',
@@ -279,64 +287,59 @@ function streamer(lat,lon){
     }
     var i;
     var foundOne = false;
-    for(i =1;i<100;i++){
+    var showInfo = ['Stream_ID','Name','HUC4','ExitWB','SHAPE_Length'];
 
+    for(i =1;i<30;i++){
         params.tolerance = i;
         $.ajax({
             type: "GET",
-            async:false,
             //url: "https://services.nationalmap.gov/arcgis/rest/services/nhd/mapserver/identify",
             url: "https://txpub.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/identify",
             data: params,
             contentType: "application/json; charset=utf-8",
             headers : {'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'},
             dataType: "json",
+            async:false,
             success: function (data) {
                 if(data.results.length > 0) {
                     foundOne = true;
-                }
-            }
-        })
-        if(foundOne) break;
-     }
-
-    params.returnGeometry = true;
-     $.ajax({
-            type: "GET",
-            //url: "https://services.nationalmap.gov/arcgis/rest/services/nhd/mapserver/identify",
-            url: "https://txpub.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/identify",
-            data: params,
-            contentType: "application/json; charset=utf-8",
-            headers : {'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'},
-            dataType: "json",
-            success: function (data) {
-                $.each(data.results,function(){
-                    var geoJSON = arcgisToGeoJSON(this);
-                    flowLines.features.push(geoJSON);
-                });
-
-            var markers = L.Proj.geoJson(flowLines, {
-                style: myStyle,
-                onEachFeature: function (feature, layer) {
-                    var popupcontent = "";
-                    $.each(feature.properties,function(k,v){
-                        popupcontent = popupcontent + "<span style='font-weight:bold'>"+k+": </span>"+v+"<br>";
+                    console.log('Found a stream '+i);
+                    $.each(data.results,function(){
+                        var geoJSON = arcgisToGeoJSON(this);
+                        flowLines.features.push(geoJSON);
                     });
-
-                    layer.bindPopup(popupcontent);
-
+                    var markers = L.Proj.geoJson(flowLines, {
+                        style: myStyle,
+                        onEachFeature: function (feature, layer) {
+                            var popupcontent = "<h4>Information from  1:1,000,000 scale USGS hydrographic base map.</h4>";
+                            var secondaryContent = ""
+                            $.each(feature.properties,function(k,v){
+                                if(showInfo.indexOf(k)>=0){
+                                    popupcontent = popupcontent + "<span style='font-weight:bold'>"+k+": </span>"+v+"<br>";
+                                }
+                                else{
+                                    secondaryContent = secondaryContent + "<span class='moreInfo' style='font-weight:italic;display:none'>"+k+": "+v+"<br></span>";
+                                }
+                            });
+                            popupcontent = popupcontent + secondaryContent+'<button onclick="$(\'.moreInfo\').show();">Click for More Info</button>';
+                            layer.bindPopup(popupcontent);
+                        }
+                    });
+                    map.addLayer(markers);
+                    layersByName['reachLayer'] = markers;
+                    var layers = markers.getLayers();
                 }
-            });
-            map.addLayer(markers);
-            layersByName['reachLayer'] = markers;
-
-
-            var layers = markers.getLayers();
             },
             error: function (request, status, errorThrown) {
                 console.log(status);
             }
+
+
         });
+        if(foundOne) return true;
+
+     }
+
 
 }
 
@@ -345,17 +348,20 @@ function streamer(lat,lon){
 
     <div class = 'center'>
         <h3>Search for your River or Watershed in Alaska</h3>
-        <div id="loading-image" style="display:none;width:69px;height:89px;border:1px solid black;position:relative;top:10%;left:50%;padding:2px;border:10px"><img src='https://www.w3schools.com/jquery/demo_wait.gif' width="64" height="64" /><br>Loading..</div>
+        <div id="loading"></div>
+        <div id="loading-image" style="width:69px;height:89px;border:1px solid black;position:relative;top:10%;left:50%;padding:2px;border:10px"><img src='https://www.w3schools.com/jquery/demo_wait.gif' width="64" height="64" /><br>Loading..</div>
         Search for River:<input type="text" id="riverSearch"><button type="button" onclick ="findStreamByName($('#riverSearch').val(),$('input[name=searchType]:checked').val(),map);">Find Rivers</button><span id="foundRivers"></span><br>
         <input type="radio" name="searchType" value="includes" checked>Includes<input type="radio" name="searchType" value="exact">Exact Match<br>
         <p><i>Text above is matched to river names in the USGS 1:1,000,000 river dataset.  Check and see how many Fish or Beaver Creeks exist in Alaska!</i></p>
         <p><i>Use the cross hairs to click a point and find the nearest river reach and HUC 6,8,10 basins</i></p>
-        <button type="button" onclick ="$.each(layersByName,function(k,v){map.removeLayer(v);mapControl.removeLayer(v);});">Clear Map</button>
+        <button type="button" onclick ="$.each(layersByName,function(k,v){console.log(v);map.removeLayer(v);mapControl.removeLayer(v);});">Clear Map</button>
     </div>
     <div class="maincontainer">
         <div id="mapid"></div>
     </div>
  <script>
+
+ $("#loading-image").css("visibility", "hidden");
 
 
 var nhdLargeFlow = L.tileLayer('https://services.nationalmap.gov/arcgis/services/nhd/MapServer/WMSServer?',{
@@ -410,19 +416,19 @@ function checkVisible(elm) {
   return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
 }
 
-map.on('click', function(e) {
-        $('#loading-image').show();
 
-        if(typeof(layersByName['pointLayer'] ) != 'undefined'){
-            map.removeLayer(layersByName['pointLayer']);
-        }
-        var newMarker = new L.marker(e.latlng).addTo(map);
-        layersByName['pointLayer'] = newMarker;
-        streamer(e.latlng.lat,e.latlng.lng);
-        getHUC(e.latlng.lat,e.latlng.lng);
-        console.log('Hide Loading image');
-        $('#loading-image').hide();
-    });
+map.on('click', function(e) {
+
+    //jQuery("#loading-image").css('visibility', 'visible');
+
+    if(typeof(layersByName['pointLayer'] ) != 'undefined'){
+        map.removeLayer(layersByName['pointLayer']);
+    }
+    streamer(e.latlng.lat,e.latlng.lng);
+    getHUC(e.latlng.lat,e.latlng.lng);
+    jQuery("#loading-image").css('visibility', 'hidden');
+
+});
 
 </script>
 
