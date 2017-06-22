@@ -95,7 +95,8 @@ function findStreamByName(name,matchType,map){
         data: params,
         dataType: "json",
         success: function (data) {
-            $('#foundRivers').html(' Reaches Found:'+data.count);
+            $('#foundRivers').html('<strong> Reaches Found:'+data.count+'<font color="green"> Shown on the map below</font> </strong>');
+            $( '#foundRivers').show();
         }
     });
 
@@ -353,12 +354,12 @@ function streamer(lat,lon){
         <input type="radio" name="searchType" value="includes" checked>Includes<input type="radio" name="searchType" value="exact">Exact Match<br>
         <p><i>Text above is matched to river names in the USGS 1:1,000,000 river dataset.  Check and see how many Fish or Beaver Creeks exist in Alaska!</i></p>
         <p><i>Use the cross hairs to click a point and find the nearest river reach and HUC 6,8,10 basins</i></p>
-        <button type="button" onclick ="$.each(layersByName,function(k,v){console.log(v);map.removeLayer(v);mapControl.removeLayer(v);});">Clear Map</button>
+        <button type="button" onclick ="$.each(layersByName,function(k,v){console.log(v);map.removeLayer(v);mapControl.removeLayer(v);});$( '#foundRivers' ).hide();">Clear Map</button>
     </div>
+    Basemap data and search capabilities provided by the USGS Streamer team.  For more information visit: <a href="https://txpub.usgs.gov/DSS/streamer/web/">https://txpub.usgs.gov/DSS/streamer/web/</a>
     <div class="maincontainer">
         <div id="mapid"></div>
     </div>
-    Base map data and search capabilities provided by the USGS Streamer team.  For more information visit: https://txpub.usgs.gov/DSS/streamer/web/
  <script>
 
  $("#loading-image").css("visibility", "hidden");
