@@ -66,7 +66,7 @@ function findStreamByName(name,matchType,map){
         bounds = L.latLngBounds(corner1, corner2);
 
     var nhdUrl = 'https://services.nationalmap.gov/arcgis/rest/services/nhd/mapserver/9/query';
-    var streamURL = 'https://txpub.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/1/query';
+    var streamURL = 'https://txgeo.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/1/query';
     var whereStatement = 'upper(Name) like upper(\'%'+name+'%\')';
     if(matchType == 'exact') whereStatement = 'upper(Name) = upper(\''+name+'\')';
     var params = {
@@ -295,7 +295,7 @@ function streamer(lat,lon){
         $.ajax({
             type: "GET",
             //url: "https://services.nationalmap.gov/arcgis/rest/services/nhd/mapserver/identify",
-            url: "https://txpub.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/identify",
+            url: "https://txgeo.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/identify",
             data: params,
             contentType: "application/json; charset=utf-8",
             headers : {'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'},
@@ -356,7 +356,7 @@ function streamer(lat,lon){
         <p><i>Use the cross hairs to click a point and find the nearest river reach and HUC 6,8,10 basins</i></p>
         <button type="button" onclick ="$.each(layersByName,function(k,v){console.log(v);map.removeLayer(v);mapControl.removeLayer(v);});$( '#foundRivers' ).hide();">Clear Map</button>
     </div>
-    Basemap data and search capabilities provided by the USGS Streamer team.  For more information visit: <a href="https://txpub.usgs.gov/DSS/streamer/web/">https://txpub.usgs.gov/DSS/streamer/web/</a>
+    Basemap data and search capabilities provided by the USGS Streamer team.  For more information visit: <a href="https://txgeo.usgs.gov/DSS/streamer/web/">https://txgeo.usgs.gov/DSS/streamer/web/</a>
     <div class="maincontainer">
         <div id="mapid"></div>
     </div>
@@ -377,9 +377,9 @@ var usgsTopo =   L.esri.tiledMapLayer({
 
 
 var worldTerrain  =  L.tileLayer( "https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}" );
-var oceanLayer    =  L.tileLayer( "https://txpub.usgs.gov/arcgis/rest/services/Mapping/Ocean/MapServer/tile/{z}/{y}/{x}",{"maxNativeZoom":11} );
-var hydroTerrain  =  L.tileLayer( "https://txpub.usgs.gov/arcgis/rest/services/Mapping/HydroBaseMapForTerrain/MapServer/tile/{z}/{y}/{x}",{"maxNativeZoom":11} );
-var hydroMask     =  L.tileLayer( "https://txpub.usgs.gov/arcgis/rest/services/Mapping/Mask/MapServer/tile/{z}/{y}/{x}", {"opacity":0.2,"maxNativeZoom":11} );
+var oceanLayer    =  L.tileLayer( "https://txgeo.usgs.gov/arcgis/rest/services/Mapping/Ocean/MapServer/tile/{z}/{y}/{x}",{"maxNativeZoom":11} );
+var hydroTerrain  =  L.tileLayer( "https://txgeo.usgs.gov/arcgis/rest/services/Mapping/HydroBaseMapForTerrain/MapServer/tile/{z}/{y}/{x}",{"maxNativeZoom":11} );
+var hydroMask     =  L.tileLayer( "https://txgeo.usgs.gov/arcgis/rest/services/Mapping/Mask/MapServer/tile/{z}/{y}/{x}", {"opacity":0.2,"maxNativeZoom":11} );
 var Esri_WorldImagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
 });
