@@ -58,6 +58,7 @@ $('#loading-image').bind('ajaxStart', function(){
 var layersByName = {};
 
 
+
 function getParameterByName(name, url) {
         if (!url) url = window.location.href;
         name = name.replace(/[\[\]]/g, "\\$&");
@@ -166,6 +167,10 @@ function findStreamByName(name,matchType,map){
                 var layers = markers.getLayers();
                 map.fitBounds(markers.getBounds());
                 mapControl.addOverlay(markers, "Named Stream Reaches");
+                console.log(sZoom);
+                if(sZoom){
+                    map.setZoom(zoom);
+                }
 
             },
             error: function (request, status, errorThrown) {
@@ -377,6 +382,7 @@ function streamer(lat,lon){
         Search for River:<input type="text" id="riverSearch"><button type="button" onclick ="findStreamByName($('#riverSearch').val(),$('input[name=searchType]:checked').val(),map);">Find Rivers</button><span id="foundRivers"></span><br>
         <input type="radio" name="searchType" value="includes" checked>Includes<input type="radio" name="searchType" value="exact">Exact Match<br>
         <p><i>Text above is matched to river names in the USGS 1:1,000,000 river dataset.  Check and see how many Fish or Beaver Creeks exist in Alaska!</i></p>
+        <div id="shareLink"></div>
         <p><i>Use the cross hairs to click a point and find the nearest:</p>
             <input type="radio" name="type" value="river" checked="checked"> River Reach<br>
             <input type="radio" name="type" value="huc"> HUC basins<br>
@@ -388,7 +394,7 @@ function streamer(lat,lon){
     </div>
  <script>
 
- $("#loading-image").css("visibility", "hidden");
+$("#loading-image").css("visibility", "hidden");
 
 
 var nhdLargeFlow = L.tileLayer('https://services.nationalmap.gov/arcgis/services/nhd/MapServer/WMSServer?',{
@@ -412,13 +418,30 @@ var Esri_WorldImagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/
 
 var hydroBase = L.layerGroup([worldTerrain, hydroTerrain, hydroMask]);
 
+var lat = getParameterByName('lat');
+if(lat == null){
+    lat = 65;
+}
+
+var lon = getParameterByName('lon');
+if(lon == null){
+    lon = -150;
+}
+
+var zoom = getParameterByName('zoom');
+var sZoom = true;
+if(zoom == null){
+    zoom = 5;
+    sZoom = false;
+}
+
 // create map with ESRI World Terrain Base, Streamer Ocean, Streamer HydroBaseMapForTerrain, and Streamer Mask layers
 map = new L.Map( "mapid", {
     "minZoom" : 4,
    // "maxZoom" : 11,
     "layers"  : [Esri_WorldImagery,esriTopo,usgsTopo,hydroBase],
-    "center"  : new L.LatLng(65,-150),
-    "zoom"    : 5,
+    "center"  : new L.LatLng(lat,lon),
+    "zoom"    : zoom,
     "attributionControl" : false
 });
 
@@ -448,6 +471,32 @@ if(river != null){
     findStreamByName(river,'exact',map);
 }
 
+map.on('zoomend', function() {
+    console.log(map.getCenter());
+    console.log(map.getZoom());
+    var link = '';
+    if(lat){
+        link = "?lat="+lat;
+    }
+    if(lon){
+        link = link+"&lon="+lon;
+    }
+    if(zoom){
+        link = link+"&zoom="+zoom;
+    }
+    if(river){
+        link = link+"&riverSearch="+river;
+    }
+    $("#shareLink").text("http://www.weather.gov/aprfc/AK_RiverSearch?"+link);
+});
+
+map.on('dragend', function() {
+    console.log(map.getCenter());
+    console.log(map.getZoom());
+});
+
+
+
 
 map.on('click', function(e) {
     jQuery("#loading-image").css('visibility', 'visible');
@@ -456,7 +505,6 @@ map.on('click', function(e) {
             getHUC(e.latlng.lat,e.latlng.lng);
             if(typeof(layersByName['pointLayer'] ) != 'undefined'){
                 map.removeLayer(layersByName['pointLayer']);
-//
             }
         }
     else{
