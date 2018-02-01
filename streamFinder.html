@@ -46,12 +46,30 @@
 </style>
 <script>
 
-$( document ).ajaxStart(function() {
+
+
+$('#loading-image').bind('ajaxStart', function(){
     jQuery("#loading-image").css('visibility', 'visible');
+}).bind('ajaxStop', function(){
+    jQuery("#loading-image").css('visibility', 'hidden');
 });
 
 
 var layersByName = {};
+
+
+function getParameterByName(name, url) {
+        if (!url) url = window.location.href;
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+
+
 
 function findStreamByName(name,matchType,map){
 
@@ -60,7 +78,7 @@ function findStreamByName(name,matchType,map){
         mapControl.removeLayer(v);
     });
     jQuery("#loading-image").css('visibility', 'visible');
-    //var bounds = map.getBounds();
+
     var corner1 = L.latLng(50, -170),
         corner2 = L.latLng(75, -132),
         bounds = L.latLngBounds(corner1, corner2);
@@ -146,7 +164,6 @@ function findStreamByName(name,matchType,map){
                 var group = new L.featureGroup(markers);
 
                 var layers = markers.getLayers();
-                //layers[0].openPopup();
                 map.fitBounds(markers.getBounds());
                 mapControl.addOverlay(markers, "Named Stream Reaches");
 
@@ -231,6 +248,8 @@ function getHUC(lat,lon){
                         }
                 });
                 map.addLayer(markers);
+                mapControl.addOverlay(markers, "HUC Basins");
+
                 layersByName['wbdLayer'] = markers;
                 $.each(data.results,function(){
                     huc = (this.layerId-1)*2;
@@ -269,6 +288,7 @@ function streamer(lat,lon){
         //layers: 'all:15',
         geometry: '{ "x" : '+point[0]+', "y" : '+point[1]+' }'
     };
+
     var flowLines = {"type":"FeatureCollection",
                         "features":[],
                         "crs":{
@@ -289,8 +309,9 @@ function streamer(lat,lon){
     var i;
     var foundOne = false;
     var showInfo = ['Stream_ID','Name','HUC4','ExitWB','SHAPE_Length'];
-
-    for(i =1;i<30;i++){
+    var markers;
+    var layer;
+    for(i =1;i<50;i++){
         params.tolerance = i;
         $.ajax({
             type: "GET",
@@ -309,7 +330,7 @@ function streamer(lat,lon){
                         var geoJSON = arcgisToGeoJSON(this);
                         flowLines.features.push(geoJSON);
                     });
-                    var markers = L.Proj.geoJson(flowLines, {
+                    markers = L.Proj.geoJson(flowLines, {
                         style: myStyle,
                         onEachFeature: function (feature, layer) {
                             var popupcontent = "<h4>Information from  1:1,000,000 scale USGS hydrographic base map.</h4>";
@@ -324,9 +345,14 @@ function streamer(lat,lon){
                             });
                             popupcontent = popupcontent + secondaryContent+'<button onclick="$(\'.moreInfo\').show();">Click for More Info</button>';
                             layer.bindPopup(popupcontent);
+                            layer.on('add', function (e) {
+                                this.openPopup();
+                            });
                         }
                     });
                     map.addLayer(markers);
+                    mapControl.addOverlay(markers, "Selected Stream Reach");
+
                     layersByName['reachLayer'] = markers;
                     var layers = markers.getLayers();
                 }
@@ -337,11 +363,9 @@ function streamer(lat,lon){
 
 
         });
-        if(foundOne) return true;
 
+        if(foundOne) return markers;
      }
-
-
 }
 
 
@@ -353,7 +377,9 @@ function streamer(lat,lon){
         Search for River:<input type="text" id="riverSearch"><button type="button" onclick ="findStreamByName($('#riverSearch').val(),$('input[name=searchType]:checked').val(),map);">Find Rivers</button><span id="foundRivers"></span><br>
         <input type="radio" name="searchType" value="includes" checked>Includes<input type="radio" name="searchType" value="exact">Exact Match<br>
         <p><i>Text above is matched to river names in the USGS 1:1,000,000 river dataset.  Check and see how many Fish or Beaver Creeks exist in Alaska!</i></p>
-        <p><i>Use the cross hairs to click a point and find the nearest river reach and HUC 6,8,10 basins</i></p>
+        <p><i>Use the cross hairs to click a point and find the nearest:</p>
+            <input type="radio" name="type" value="river" checked="checked"> River Reach<br>
+            <input type="radio" name="type" value="huc"> HUC basins<br>
         <button type="button" onclick ="$.each(layersByName,function(k,v){console.log(v);map.removeLayer(v);mapControl.removeLayer(v);});$( '#foundRivers' ).hide();">Clear Map</button>
     </div>
     Basemap data and search capabilities provided by the USGS Streamer team.  For more information visit: <a href="https://txpub.usgs.gov/DSS/streamer/web/">https://txpub.usgs.gov/DSS/streamer/web/</a>
@@ -417,19 +443,28 @@ function checkVisible(elm) {
   return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
 }
 
+var river = getParameterByName('riverSearch');
+if(river != null){
+    findStreamByName(river,'exact',map);
+}
+
 
 map.on('click', function(e) {
+    jQuery("#loading-image").css('visibility', 'visible');
 
-    //jQuery("#loading-image").css('visibility', 'visible');
-
-    if(typeof(layersByName['pointLayer'] ) != 'undefined'){
-        map.removeLayer(layersByName['pointLayer']);
+    if($('input[name="type"]:checked').val() == 'huc') {
+            getHUC(e.latlng.lat,e.latlng.lng);
+            if(typeof(layersByName['pointLayer'] ) != 'undefined'){
+                map.removeLayer(layersByName['pointLayer']);
+//
+            }
+        }
+    else{
+        streamer(e.latlng.lat,e.latlng.lng);
+        layersByName['reachLayer'].openPopup();
     }
-    streamer(e.latlng.lat,e.latlng.lng);
-    getHUC(e.latlng.lat,e.latlng.lng);
     jQuery("#loading-image").css('visibility', 'hidden');
 
 });
-
 </script>
 
