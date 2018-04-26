@@ -467,8 +467,15 @@ function checkVisible(elm) {
 }
 
 var river = getParameterByName('riverSearch');
+var getExact = getParameterByName('exact');
 if(river != null){
-    findStreamByName(river,'exact',map);
+    if(getExact != null){
+        findStreamByName(river,'exact',map);
+    }
+    else{
+        findStreamByName(river,'includes',map);
+    }
+
 }
 
 map.on('zoomend', function() {
