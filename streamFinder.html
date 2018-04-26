@@ -469,6 +469,7 @@ function checkVisible(elm) {
 var river = getParameterByName('riverSearch');
 var getExact = getParameterByName('exact');
 if(river != null){
+    $('#riverSearch').val(river);
     if(getExact != null){
         findStreamByName(river,'exact',map);
     }
@@ -494,7 +495,7 @@ map.on('zoomend', function() {
     if(river){
         link = link+"&riverSearch="+river;
     }
-    $("#shareLink").text("http://www.weather.gov/aprfc/AK_RiverSearch?"+link);
+    //$("#shareLink").text("http://www.weather.gov/aprfc/AK_RiverSearch?"+link);
 });
 
 map.on('dragend', function() {
