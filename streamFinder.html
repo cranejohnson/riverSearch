@@ -825,7 +825,7 @@ function streamer(lat,lon){
 </script>
     <div class = 'center'>
         <h3>Search for your River or Watershed in Alaska (<i>use the link below to share your search</i>)</h3>
-        <a href = "" id="directLink" target="_blank">Link to share map (right click 'Copy Link Address')</a><br>
+        <a href = "" id="directLink" target="_blank">Link to share map (right click 'Copy Link Address')</a><br><br>
 
         <Table style="margin-left:auto;margin-right:auto;">
           <tr>
@@ -833,7 +833,7 @@ function streamer(lat,lon){
             <div id="loading"></div>
             <div id="loading-image" style="width:69px;height:89px;border:1px solid black;position:relative;top:10%;left:50%;padding:2px;border:10px"><img src='https://www.w3schools.com/jquery/demo_wait.gif' width="64" height="64" /><br>Loading..</div>
           </td>
-          <td width = 600px>
+          <td width = 600px align="left">
 
             Search for River:<input type="text" id="riverSearch"> in:
             <select id="state">
@@ -892,7 +892,7 @@ function streamer(lat,lon){
             </select>
             <button type="button" id="buttonSearch" onclick ="searchStream();">Find Rivers</button><br><span id="foundRivers"></span>
             <br>
-            <input type="radio" name="searchType" value="includes" checked>Includes<input type="radio" name="searchType" value="exact">Exact Match<br>
+            <input type="radio" name="searchType" value="includes" checked>Includes<input type="radio" name="searchType" value="exact">Exact Match
           </td>
         </tr>
        </table>
