@@ -49,6 +49,430 @@
 </style>
 <script>
 
+var stateBnds =
+{
+  "USA":{
+    "name": "United States",
+    "min_lat": 0,
+    "max_lat": 75,
+    "min_lng": -180,
+    "max_lng": -90
+  },
+
+  "AK": {
+    "name": "Alaska",
+    "min_lat": 52.5964,
+    "max_lat": 71.5232,
+    "min_lng": -169.9146,
+    "max_lng": -129.993
+  },
+  "AL": {
+    "name": "Alabama",
+    "min_lat": 30.1463,
+    "max_lat": 35.0041,
+    "min_lng": -88.4743,
+    "max_lng": -84.8927
+  },
+  "AR": {
+    "name": "Arkansas",
+    "min_lat": 33.0075,
+    "max_lat": 36.4997,
+    "min_lng": -94.6198,
+    "max_lng": -89.6594
+  },
+  "AZ": {
+    "name": "Arizona",
+    "min_lat": 31.3325,
+    "max_lat": 37.0004,
+    "min_lng": -114.8126,
+    "max_lng": -109.0475
+  },
+  "CA": {
+    "name": "California",
+    "min_lat": 32.5121,
+    "max_lat": 42.0126,
+    "min_lng": -124.6509,
+    "max_lng": -114.1315
+  },
+  "CO": {
+    "name": "Colorado",
+    "min_lat": 36.9949,
+    "max_lat": 41.0006,
+    "min_lng": -109.0489,
+    "max_lng": -102.0424
+  },
+  "CT": {
+    "name": "Connecticut",
+    "min_lat": 40.9509,
+    "max_lat": 42.0511,
+    "min_lng": -73.7272,
+    "max_lng": -71.7874
+  },
+  "DE": {
+    "name": "Delaware",
+    "min_lat": 38.4482,
+    "max_lat": 39.8296,
+    "min_lng": -75.7919,
+    "max_lng": -74.8526
+  },
+  "FL": {
+    "name": "Florida",
+    "min_lat": 24.3959,
+    "max_lat": 31.0035,
+    "min_lng": -87.6256,
+    "max_lng": -79.8198
+  },
+  "GA": {
+    "name": "Georgia",
+    "min_lat": 30.3575,
+    "max_lat": 34.9996,
+    "min_lng": -85.6082,
+    "max_lng": -80.696
+  },
+  "HI": {
+    "name": "Hawaii",
+    "min_lat": 18.71,
+    "max_lat": 22.3386,
+    "min_lng": -160.3922,
+    "max_lng": -154.6271
+  },
+  "IA": {
+    "name": "Iowa",
+    "min_lat": 40.3622,
+    "max_lat": 43.5008,
+    "min_lng": -96.6357,
+    "max_lng": -90.1538
+  },
+  "ID": {
+    "name": "Idaho",
+    "min_lat": 41.9871,
+    "max_lat": 49.0018,
+    "min_lng": -117.2372,
+    "max_lng": -111.0471
+  },
+  "IL": {
+    "name": "Illinois",
+    "min_lat": 36.9894,
+    "max_lat": 42.5116,
+    "min_lng": -91.512,
+    "max_lng": -87.0213
+  },
+  "IN": {
+    "name": "Indiana",
+    "min_lat": 37.7718,
+    "max_lat": 41.7611,
+    "min_lng": -88.098,
+    "max_lng": -84.809
+  },
+  "KS": {
+    "name": "Kansas",
+    "min_lat": 36.9927,
+    "max_lat": 40.0087,
+    "min_lng": -102.0506,
+    "max_lng": -94.6046
+  },
+  "KY": {
+    "name": "Kentucky",
+    "min_lat": 36.4931,
+    "max_lat": 39.1439,
+    "min_lng": -89.5372,
+    "max_lng": -82.0308
+  },
+  "LA": {
+    "name": "Louisiana",
+    "min_lat": 28.8832,
+    "max_lat": 33.0225,
+    "min_lng": -94.043,
+    "max_lng": -88.7421
+  },
+  "MA": {
+    "name": "Massachusetts",
+    "min_lat": 41.159,
+    "max_lat": 42.889,
+    "min_lng": -73.5081,
+    "max_lng": -69.7398
+  },
+  "MD": {
+    "name": "Maryland",
+    "min_lat": 37.8889,
+    "max_lat": 39.722,
+    "min_lng": -79.4861,
+    "max_lng": -74.8581
+  },
+  "ME": {
+    "name": "Maine",
+    "min_lat": 42.9182,
+    "max_lat": 47.455,
+    "min_lng": -71.0829,
+    "max_lng": -66.8628
+  },
+  "MI": {
+    "name": "Michigan",
+    "min_lat": 41.6965,
+    "max_lat": 48.3042,
+    "min_lng": -90.4175,
+    "max_lng": -82.1221
+  },
+  "MN": {
+    "name": "Minnesota",
+    "min_lat": 43.5008,
+    "max_lat": 49.3877,
+    "min_lng": -97.2304,
+    "max_lng": -89.4919
+  },
+  "MO": {
+    "name": "Missouri",
+    "min_lat": 35.9958,
+    "max_lat": 40.6181,
+    "min_lng": -95.7527,
+    "max_lng": -89.1005
+  },
+  "MS": {
+    "name": "Mississippi",
+    "min_lat": 30.0905,
+    "max_lat": 35.0075,
+    "min_lng": -91.6589,
+    "max_lng": -88.0994
+  },
+  "MT": {
+    "name": "Montana",
+    "min_lat": 44.3563,
+    "max_lat": 48.9991,
+    "min_lng": -116.0458,
+    "max_lng": -104.0186
+  },
+  "NC": {
+    "name": "North Carolina",
+    "min_lat": 33.7666,
+    "max_lat": 36.588,
+    "min_lng": -84.3201,
+    "max_lng": -75.4129
+  },
+  "ND": {
+    "name": "North Dakota",
+    "min_lat": 45.934,
+    "max_lat": 48.9982,
+    "min_lng": -104.0501,
+    "max_lng": -96.5671
+  },
+  "NE": {
+    "name": "Nebraska",
+    "min_lat": 39.9992,
+    "max_lat": 43.0006,
+    "min_lng": -104.0543,
+    "max_lng": -95.3091
+  },
+  "NH": {
+    "name": "New Hampshire",
+    "min_lat": 42.6986,
+    "max_lat": 45.3058,
+    "min_lng": -72.5592,
+    "max_lng": -70.5583
+  },
+  "NJ": {
+    "name": "New Jersey",
+    "min_lat": 38.8472,
+    "max_lat": 41.3593,
+    "min_lng": -75.5708,
+    "max_lng": -73.8885
+  },
+  "NM": {
+    "name": "New Mexico",
+    "min_lat": 31.3337,
+    "max_lat": 36.9982,
+    "min_lng": -109.0489,
+    "max_lng": -103.0023
+  },
+  "NV": {
+    "name": "Nevada",
+    "min_lat": 35.003,
+    "max_lat": 42.0003,
+    "min_lng": -120.0037,
+    "max_lng": -114.0436
+  },
+  "NY": {
+    "name": "New York",
+    "min_lat": 40.4772,
+    "max_lat": 45.0153,
+    "min_lng": -79.7624,
+    "max_lng": -71.7517
+  },
+  "OH": {
+    "name": "Ohio",
+    "min_lat": 38.3761,
+    "max_lat": 42.321,
+    "min_lng": -84.8172,
+    "max_lng": -80.5188
+  },
+  "OK": {
+    "name": "Oklahoma",
+    "min_lat": 33.6386,
+    "max_lat": 37.0015,
+    "min_lng": -103.0064,
+    "max_lng": -94.4357
+  },
+  "OR": {
+    "name": "Oregon",
+    "min_lat": 41.9952,
+    "max_lat": 46.2891,
+    "min_lng": -124.7305,
+    "max_lng": -116.4606
+  },
+  "PA": {
+    "name": "Pennsylvania",
+    "min_lat": 39.7199,
+    "max_lat": 42.5167,
+    "min_lng": -80.5243,
+    "max_lng": -74.707
+  },
+  "RI": {
+    "name": "Rhode Island",
+    "min_lat": 41.1849,
+    "max_lat": 42.0156,
+    "min_lng": -71.9041,
+    "max_lng": -71.0541
+  },
+  "SC": {
+    "name": "South Carolina",
+    "min_lat": 32.0453,
+    "max_lat": 35.2075,
+    "min_lng": -83.3588,
+    "max_lng": -78.4836
+  },
+  "SD": {
+    "name": "South Dakota",
+    "min_lat": 42.4772,
+    "max_lat": 45.9435,
+    "min_lng": -104.0529,
+    "max_lng": -96.438
+  },
+  "TN": {
+    "name": "Tennessee",
+    "min_lat": 34.9884,
+    "max_lat": 36.6871,
+    "min_lng": -90.3131,
+    "max_lng": -81.6518
+  },
+  "TX": {
+    "name": "Texas",
+    "min_lat": 25.8419,
+    "max_lat": 36.5008,
+    "min_lng": -106.6168,
+    "max_lng": -93.5074
+  },
+  "UT": {
+    "name": "Utah",
+    "min_lat": 36.9982,
+    "max_lat": 41.9993,
+    "min_lng": -114.0504,
+    "max_lng": -109.0462
+  },
+  "VA": {
+    "name": "Virginia",
+    "min_lat": 36.5427,
+    "max_lat": 39.4659,
+    "min_lng": -83.6753,
+    "max_lng": -74.9707
+  },
+  "VT": {
+    "name": "Vermont",
+    "min_lat": 42.7289,
+    "max_lat": 45.0153,
+    "min_lng": -73.4381,
+    "max_lng": -71.4949
+  },
+  "WA": {
+    "name": "Washington",
+    "min_lat": 45.5439,
+    "max_lat": 49.0027,
+    "min_lng": -124.8679,
+    "max_lng": -116.9165
+  },
+  "WI": {
+    "name": "Wisconsin",
+    "min_lat": 42.4954,
+    "max_lat": 47.31,
+    "min_lng": -92.8564,
+    "max_lng": -86.2523
+  },
+  "WV": {
+    "name": "West Virginia",
+    "min_lat": 37.1953,
+    "max_lat": 40.6338,
+    "min_lng": -82.6392,
+    "max_lng": -77.731
+  },
+  "WY": {
+    "name": "Wyoming",
+    "min_lat": 40.9986,
+    "max_lat": 44.9998,
+    "min_lng": -111.0539,
+    "max_lng": -104.0556
+  },
+  "AS": {
+    "name": "American Samoa",
+    "min_lat": -14.377579,
+    "max_lat": -14.221549,
+    "min_lng": -170.851479,
+    "max_lng": -170.539742
+  },
+  "DC": {
+    "name": "District of Columbia",
+    "min_lat": 38.79164435,
+    "max_lat": 39.031386,
+    "min_lng": -77.11979522,
+    "max_lng": -76.867218
+  },
+  "FM": {
+    "name": "Federated States of Micronesia",
+    "min_lat": 6.673985,
+    "max_lat": 7.202918,
+    "min_lng": 157.651062,
+    "max_lng": 158.595886
+  },
+  "GU": {
+    "name": "Guam",
+    "min_lat": 13.227058,
+    "max_lat": 14.204108,
+    "min_lng": 144.598961,
+    "max_lng": 145.301743
+  },
+  "MH": {
+    "name": "Marshall Islands",
+    "min_lat": 1.7575,
+    "max_lat": 17.9578,
+    "min_lng": 157.4121,
+    "max_lng": 175.5395
+  },
+  "MP": {
+    "name": "Northern Mariana Islands",
+    "min_lat": 14.834442,
+    "max_lat": 15.300557,
+    "min_lng": 145.530052,
+    "max_lng": 145.836296
+  },
+  "PW": {
+    "name": "Palau",
+    "min_lat": 1.7355,
+    "max_lat": 11.4584,
+    "min_lng": 129.6166,
+    "max_lng": 136.9116
+  },
+  "PR": {
+    "name": "Puerto Rico",
+    "min_lat": 17.904834,
+    "max_lat": 18.520551,
+    "min_lng": -67.289886,
+    "max_lng": -65.177765
+  },
+  "VI": {
+    "name": "Virgin Islands",
+    "min_lat": 18.302014,
+    "max_lat": 18.751244,
+    "min_lng": -64.861221,
+    "max_lng": -64.26384
+  }
+}
 
 
 $('#loading-image').bind('ajaxStart', function(){
@@ -74,6 +498,20 @@ function getParameterByName(name, url) {
 
 
 
+function updateLink(){
+
+    var matchValue = $("input[name='searchType']:checked").val();
+    var link = "?lat="+map.getCenter().lat.toFixed(5)+"&lon="+map.getCenter().lng.toFixed(5)+"&zoom="+map.getZoom()+"&riverSearch="+$('#riverSearch').val()+"&match="+matchValue+"&state="+$('#state').val();
+    $("#directLink").attr("href", link);
+    $("#directLink").text(document.location.hostname + document.location.pathname+link);
+
+}
+
+function searchStream(){
+
+    findStreamByName($('#riverSearch').val(),$('input[name=searchType]:checked').val(),map,false);
+    updateLink();
+}
 
 function findStreamByName(name,matchType,map,zoomMap){
 
@@ -83,9 +521,16 @@ function findStreamByName(name,matchType,map,zoomMap){
     });
     jQuery("#loading-image").css('visibility', 'visible');
 
-    var corner1 = L.latLng(50, -170),
-        corner2 = L.latLng(75, -132),
+   var stateSearch = $('#state').val();
+
+    var corner1 = L.latLng(stateBnds[stateSearch]['min_lat'],stateBnds[stateSearch]['min_lng']),
+        corner2 = L.latLng(stateBnds[stateSearch]['max_lat'],stateBnds[stateSearch]['max_lng']),
+
+//    var corner1 = L.latLng(50, -170),
+//        corner2 = L.latLng(75, -132),
+
         bounds = L.latLngBounds(corner1, corner2);
+
 
     var nhdUrl = 'https://services.nationalmap.gov/arcgis/rest/services/nhd/mapserver/9/query';
     var streamURL = 'https://txgeo.usgs.gov/arcgis/rest/services/Streamer/HydroData/MapServer/1/query';
@@ -94,7 +539,7 @@ function findStreamByName(name,matchType,map,zoomMap){
     var params = {
         //where: 'upper(GNIS_NAME) like upper(\'%'+name+'%\')',
         where: whereStatement,
-        geometry:'esriGeometryEnvelope&geometry='+bounds.getEast()+','+bounds.getSouth()+','+bounds.getWest()+','+bounds.getNorth(),
+        geometry:bounds.getEast()+','+bounds.getSouth()+','+bounds.getWest()+','+bounds.getNorth(),
         geometryType:'esriGeometryEnvelope',
         inSR:4326,
         spatialRel:'esriSpatialRelIntersects',
@@ -110,7 +555,7 @@ function findStreamByName(name,matchType,map,zoomMap){
         //f:'geojson'
         f:'json'
         }
-
+    if(stateSearch == 'USA') params.geometry = '';
     $.ajax({
         type: "GET",
         url: streamURL,
@@ -134,7 +579,7 @@ function findStreamByName(name,matchType,map,zoomMap){
                     }
 
     var myStyle = {
-        "color": "green",
+        "color": "red",
         "weight": 5,
     };
     if(typeof(layersByName['streamNameLayer'] ) != 'undefined'){
@@ -381,18 +826,83 @@ function streamer(lat,lon){
     <div class = 'center'>
         <h3>Search for your River or Watershed in Alaska (<i>use the link below to share your search</i>)</h3>
         <a href = "" id="directLink" target="_blank">Link to share map (right click 'Copy Link Address')</a><br>
-        <div id="loading"></div>
-        <div id="loading-image" style="width:69px;height:89px;border:1px solid black;position:relative;top:10%;left:50%;padding:2px;border:10px"><img src='https://www.w3schools.com/jquery/demo_wait.gif' width="64" height="64" /><br>Loading..</div>
-        Search for River:<input type="text" id="riverSearch"><button type="button" id="buttonSearch" onclick ="findStreamByName($('#riverSearch').val(),$('input[name=searchType]:checked').val(),map,false);">Find Rivers</button><br><span id="foundRivers"></span>
-        <br>
-        <input type="radio" name="searchType" value="includes" checked>Includes<input type="radio" name="searchType" value="exact">Exact Match<br>
+
+        <Table style="margin-left:auto;margin-right:auto;">
+          <tr>
+          <td width = 200px>
+            <div id="loading"></div>
+            <div id="loading-image" style="width:69px;height:89px;border:1px solid black;position:relative;top:10%;left:50%;padding:2px;border:10px"><img src='https://www.w3schools.com/jquery/demo_wait.gif' width="64" height="64" /><br>Loading..</div>
+          </td>
+          <td width = 600px>
+
+            Search for River:<input type="text" id="riverSearch"> in:
+            <select id="state">
+                <option value="USA">United States</option>
+                <option value="AL">Alabama</option>
+                <option value="AK" selected>Alaska</option>
+                <option value="AZ">Arizona</option>
+                <option value="AR">Arkansas</option>
+                <option value="CA">California</option>
+                <option value="CO">Colorado</option>
+                <option value="CT">Connecticut</option>
+                <option value="DE">Delaware</option>
+                <option value="DC">District Of Columbia</option>
+                <option value="FL">Florida</option>
+                <option value="GA">Georgia</option>
+                <option value="HI">Hawaii</option>
+                <option value="ID">Idaho</option>
+                <option value="IL">Illinois</option>
+                <option value="IN">Indiana</option>
+                <option value="IA">Iowa</option>
+                <option value="KS">Kansas</option>
+                <option value="KY">Kentucky</option>
+                <option value="LA">Louisiana</option>
+                <option value="ME">Maine</option>
+                <option value="MD">Maryland</option>
+                <option value="MA">Massachusetts</option>
+                <option value="MI">Michigan</option>
+                <option value="MN">Minnesota</option>
+                <option value="MS">Mississippi</option>
+                <option value="MO">Missouri</option>
+                <option value="MT">Montana</option>
+                <option value="NE">Nebraska</option>
+                <option value="NV">Nevada</option>
+                <option value="NH">New Hampshire</option>
+                <option value="NJ">New Jersey</option>
+                <option value="NM">New Mexico</option>
+                <option value="NY">New York</option>
+                <option value="NC">North Carolina</option>
+                <option value="ND">North Dakota</option>
+                <option value="OH">Ohio</option>
+                <option value="OK">Oklahoma</option>
+                <option value="OR">Oregon</option>
+                <option value="PA">Pennsylvania</option>
+                <option value="RI">Rhode Island</option>
+                <option value="SC">South Carolina</option>
+                <option value="SD">South Dakota</option>
+                <option value="TN">Tennessee</option>
+                <option value="TX">Texas</option>
+                <option value="UT">Utah</option>
+                <option value="VT">Vermont</option>
+                <option value="VA">Virginia</option>
+                <option value="WA">Washington</option>
+                <option value="WV">West Virginia</option>
+                <option value="WI">Wisconsin</option>
+                <option value="WY">Wyoming</option>
+            </select>
+            <button type="button" id="buttonSearch" onclick ="searchStream();">Find Rivers</button><br><span id="foundRivers"></span>
+            <br>
+            <input type="radio" name="searchType" value="includes" checked>Includes<input type="radio" name="searchType" value="exact">Exact Match<br>
+          </td>
+        </tr>
+       </table>
         <i>Text above is matched to river names in the USGS 1:1,000,000 river dataset.  Check and see how many Fish or Beaver Creeks exist in Alaska!</i><br>
         <i>Use the cross hairs to click a point and find the nearest:<br>
             <input type="radio" name="type" value="river" checked="checked"> River Reach<br>
             <input type="radio" name="type" value="huc"> HUC basins<br>
         <button type="button" onclick ="$.each(layersByName,function(k,v){console.log(v);map.removeLayer(v);mapControl.removeLayer(v);});$( '#foundRivers' ).hide();">Clear Map</button>
     </div>
-    Basemap data and search capabilities provided by the USGS Streamer team.  For more information visit: <a href="https://txgeo.usgs.gov/DSS/streamer/web/">https://txgeo.usgs.gov/DSS/streamer/web/</a>
+    <center>Basemap data and search capabilities provided by the USGS Streamer team.  For more information visit: <a href="https://txgeo.usgs.gov/DSS/streamer/web/">https://txgeo.usgs.gov/DSS/streamer/web/</a></center>
     <div class="maincontainer">
         <div id="mapid"></div>
     </div>
@@ -471,29 +981,33 @@ function checkVisible(elm) {
 }
 
 var river = getParameterByName('riverSearch');
-var getExact = getParameterByName('exact');
+var match = getParameterByName('match');
+
+var state = getParameterByName('state');
+if(state.length > 0) $("#state").val(state);
+
 if(river != null){
     $('#riverSearch').val(river);
     if(river.length > 0){
-        if(getExact != null){
+        if(match == 'exact'){
             findStreamByName(river,'exact',map,true);
+            $("input[name=searchType][value='exact']").prop("checked",true);
         }
         else{
             findStreamByName(river,'includes',map,true);
+            $("input[name=searchType][value='includes']").prop("checked",true);
         }
     }
 }
 
+
+
 map.on('zoomend', function() {
-    var link = "?lat="+map.getCenter().lat.toFixed(5)+"&lon="+map.getCenter().lng.toFixed(5)+"&zoom="+map.getZoom()+"&riverSearch="+$('#riverSearch').val();
-    $("#directLink").attr("href", link);
-    $("#directLink").text(document.location.hostname + document.location.pathname+link);    
+    updateLink();
 });
 
 map.on('dragend', function() {
-    var link = "?lat="+map.getCenter().lat.toFixed(5)+"&lon="+map.getCenter().lng.toFixed(5)+"&zoom="+map.getZoom()+"&riverSearch="+$('#riverSearch').val();
-    $("#directLink").attr("href", link);
-    $("#directLink").text(document.location.hostname + document.location.pathname+link);
+    updateLink();
 });
 
 
@@ -529,4 +1043,3 @@ input.addEventListener("keyup", function(event) {
   }
 });
 </script>
-
