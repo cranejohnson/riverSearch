@@ -495,10 +495,10 @@ function getParameterByName(name, url) {
 
 
 
-function updateLink (){
+function updateLink(){
 
     var matchValue = $("input[name='searchType']:checked").val();
-    var link = "?lat="+map.getCenter().lat.toFixed(5)+"&lon="+map.getCenter().lng.toFixed(5)+"&zoom="+map.getZoom()+"&riverSearch="+$('#riverSearch').val()+"&match="+matchValue;
+    var link = "?lat="+map.getCenter().lat.toFixed(5)+"&lon="+map.getCenter().lng.toFixed(5)+"&zoom="+map.getZoom()+"&riverSearch="+$('#riverSearch').val()+"&match="+matchValue+"&state="+$('#state').val();
     $("#directLink").attr("href", link);
     $("#directLink").text(document.location.hostname + document.location.pathname+link);
 
@@ -979,8 +979,8 @@ function checkVisible(elm) {
 var river = getParameterByName('riverSearch');
 var match = getParameterByName('match');
 
-
-
+var state = getParameterByName('state');
+if(state.length > 0) $("#state").val(state);
 
 if(river != null){
     $('#riverSearch').val(river);
@@ -999,17 +999,11 @@ if(river != null){
 
 
 map.on('zoomend', function() {
-    var matchValue = $("input[name='searchType']:checked").val();
-    var link = "?lat="+map.getCenter().lat.toFixed(5)+"&lon="+map.getCenter().lng.toFixed(5)+"&zoom="+map.getZoom()+"&riverSearch="+$('#riverSearch').val()+"&match="+matchValue;
-    $("#directLink").attr("href", link);
-    $("#directLink").text(document.location.hostname + document.location.pathname+link);
+    updateLink();
 });
 
 map.on('dragend', function() {
-    var matchValue = $("input[name='searchType']:checked").val();
-    var link = "?lat="+map.getCenter().lat.toFixed(5)+"&lon="+map.getCenter().lng.toFixed(5)+"&zoom="+map.getZoom()+"&riverSearch="+$('#riverSearch').val()+"&match="+matchValue;
-    $("#directLink").attr("href", link);
-    $("#directLink").text(document.location.hostname + document.location.pathname+link);
+    updateLink();
 });
 
 
