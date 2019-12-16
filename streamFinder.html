@@ -1,6 +1,9 @@
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+
 
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
@@ -376,8 +379,8 @@ function streamer(lat,lon){
 
 </script>
     <div class = 'center'>
-        <h3>Search for your River or Watershed in Alaska</h3>
-        <a href = "" id="directLink">Link to share map (right click 'Copy Link Address')</a><br>
+        <h3>Search for your River or Watershed in Alaska (<i>use the link below to share your search</i>)</h3>
+        <a href = "" id="directLink" target="_blank">Link to share map (right click 'Copy Link Address')</a><br>
         <div id="loading"></div>
         <div id="loading-image" style="width:69px;height:89px;border:1px solid black;position:relative;top:10%;left:50%;padding:2px;border:10px"><img src='https://www.w3schools.com/jquery/demo_wait.gif' width="64" height="64" /><br>Loading..</div>
         Search for River:<input type="text" id="riverSearch"><button type="button" id="buttonSearch" onclick ="findStreamByName($('#riverSearch').val(),$('input[name=searchType]:checked').val(),map,false);">Find Rivers</button><br><span id="foundRivers"></span>
@@ -407,15 +410,15 @@ var esriTopo = L.esri.basemapLayer("Topographic");
 var usgsTopo =   L.esri.tiledMapLayer({
     url: "https://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer"
   });
-
-
 var worldTerrain  =  L.tileLayer( "https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}" );
-var oceanLayer    =  L.tileLayer( "https://txgeo.usgs.gov/arcgis/rest/services/Mapping/Ocean/MapServer/tile/{z}/{y}/{x}",{"maxNativeZoom":11} );
-var hydroTerrain  =  L.tileLayer( "https://txgeo.usgs.gov/arcgis/rest/services/Mapping/HydroBaseMapForTerrain/MapServer/tile/{z}/{y}/{x}",{"maxNativeZoom":11} );
-var hydroMask     =  L.tileLayer( "https://txgeo.usgs.gov/arcgis/rest/services/Mapping/Mask/MapServer/tile/{z}/{y}/{x}", {"opacity":0.2,"maxNativeZoom":11} );
 var Esri_WorldImagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
 });
+
+
+var oceanLayer    =  L.tileLayer( "https://txgeo.usgs.gov/arcgis/rest/services/Mapping/Ocean/MapServer/tile/{z}/{y}/{x}",{"maxNativeZoom":11} );
+var hydroTerrain  =  L.tileLayer( "https://txgeo.usgs.gov/arcgis/rest/services/Mapping/HydroBaseMapForTerrain/MapServer/tile/{z}/{y}/{x}",{"maxNativeZoom":11} );
+var hydroMask     =  L.tileLayer( "https://txgeo.usgs.gov/arcgis/rest/services/Mapping/Mask/MapServer/tile/{z}/{y}/{x}", {"opacity":0.2,"maxNativeZoom":11} );
 
 var hydroBase = L.layerGroup([worldTerrain, hydroTerrain, hydroMask]);
 
@@ -484,11 +487,13 @@ if(river != null){
 map.on('zoomend', function() {
     var link = "?lat="+map.getCenter().lat.toFixed(5)+"&lon="+map.getCenter().lng.toFixed(5)+"&zoom="+map.getZoom()+"&riverSearch="+$('#riverSearch').val();
     $("#directLink").attr("href", link);
+    $("#directLink").text(document.location.hostname + document.location.pathname+link);    
 });
 
 map.on('dragend', function() {
     var link = "?lat="+map.getCenter().lat.toFixed(5)+"&lon="+map.getCenter().lng.toFixed(5)+"&zoom="+map.getZoom()+"&riverSearch="+$('#riverSearch').val();
     $("#directLink").attr("href", link);
+    $("#directLink").text(document.location.hostname + document.location.pathname+link);
 });
 
 
