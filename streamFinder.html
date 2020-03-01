@@ -10,12 +10,17 @@
 <link rel="stylesheet" href="https://mrmufflon.github.io/Leaflet.Coordinates/dist/Leaflet.Coordinates-0.1.3.css"/>
 <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://azavea.github.io/Leaflet.zoomdisplay/css/leaflet.zoomdisplay.css"/>
+<link rel="stylesheet" href="https://daniellsu.github.io/leaflet-betterscale/L.Control.BetterScale.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@0.4.1/dist/leaflet.draw.css" />
+
 <script src="https://unpkg.com/esri-leaflet@2.0.8"></script>
 <script src="https://azavea.github.io/Leaflet.zoomdisplay/js/leaflet.zoomdisplay.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.4.3/proj4.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4leaflet/1.0.1/proj4leaflet.min.js"></script>
 <script src="https://mrmufflon.github.io/Leaflet.Coordinates/dist/Leaflet.Coordinates-0.1.3.min.js"></script>
 <script src="https://www.weather.gov/source/aprfc/js/esri2geojson.js"></script>
+<script src="https://unpkg.com/leaflet-draw@0.4.1/dist/leaflet.draw.js"></script>
+<script src="https://daniellsu.github.io/leaflet-betterscale/L.Control.BetterScale.js"></script>
 
 
 
@@ -36,6 +41,13 @@
 .map {
     height: 300px;
     width: 400px;
+}
+
+P.blocktext {
+    margin-left: auto;
+    margin-right: auto;
+    width: 500px;
+    text-align: left;
 }
 
 #mapid {
@@ -483,6 +495,11 @@ $('#loading-image').bind('ajaxStart', function(){
 
 
 var layersByName = {};
+var wbdLayers = L.featureGroup();
+var drawnItems = new L.FeatureGroup();
+var streamLines = new L.FeatureGroup();
+var drawing = false;
+
 
 
 
@@ -495,8 +512,6 @@ function getParameterByName(name, url) {
         if (!results[2]) return '';
         return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
-
-
 
 function updateLink(){
 
@@ -537,7 +552,6 @@ function findStreamByName(name,matchType,map,zoomMap){
     var whereStatement = 'upper(Name) like upper(\'%'+name+'%\')';
     if(matchType == 'exact') whereStatement = 'upper(Name) = upper(\''+name+'\')';
     var params = {
-        //where: 'upper(GNIS_NAME) like upper(\'%'+name+'%\')',
         where: whereStatement,
         geometry:bounds.getEast()+','+bounds.getSouth()+','+bounds.getWest()+','+bounds.getNorth(),
         geometryType:'esriGeometryEnvelope',
@@ -552,17 +566,17 @@ function findStreamByName(name,matchType,map,zoomMap){
         returnZ:false,
         returnM:false,
         returnDistinctValues:false,
-        //f:'geojson'
         f:'json'
         }
     if(stateSearch == 'USA') params.geometry = '';
     $.ajax({
-        type: "GET",
+        type: 'GET',
         url: streamURL,
         data: params,
-        dataType: "json",
+        dataType: 'json',
+        //contentType: "application/json",
         success: function (data) {
-            $('#foundRivers').html('<strong> River Reaches Found: '+data.count+' <font color="green"> Shown in Green on the map below</font> </strong>');
+            $('#foundRivers').html('<strong> River Reaches Found: <font color="red">'+data.count+' Shown in Red on the map below</font> </strong>');
             $( '#foundRivers').show();
         }
     });
@@ -608,12 +622,11 @@ function findStreamByName(name,matchType,map,zoomMap){
 
                         }
                 });
-                map.addLayer(markers);
-                layersByName['streamNameLayer'] = markers;
+
+
+                markers.addTo(streamLines);
                 var group = new L.featureGroup(markers);
 
-                var layers = markers.getLayers();
-                mapControl.addOverlay(markers, "Named Stream Reaches");
                 console.log(sZoom);
                 if(!zoomMap){
                     map.fitBounds(markers.getBounds());
@@ -640,6 +653,15 @@ function getHUC(lat,lon){
     var wd = 1370*100;    //imageDisplay x 100 = each pixel 100 meters
     var results = {};
 
+    var hucsToGet = $('.hucScale input:checked').map(function () {
+        return this.name.replace( /^\D+/g, '');
+    }).get();
+
+    var layersToGet = $('.hucScale input:checked').map(function () {
+        return this.name.replace( /^\D+/g, '')/2;
+    }).get();
+
+
     var params = {
         tolerance : 0,
         returnGeometry : true,
@@ -648,10 +670,11 @@ function getHUC(lat,lon){
         imageDisplay : '1370,315,1',
         f : 'json',
         sr : 102100,
-        layers: 'all:4,5,6',
+        layers: "all:"+layersToGet.join(),
         geometry: '{ "x" : '+point[0]+', "y" : '+point[1]+' }'
     };
-    var flowLines = {"type":"FeatureCollection",
+
+    var wbdpolys = {"type":"FeatureCollection",
                         "features":[],
                         "crs":{
                             "type": "name",
@@ -661,18 +684,16 @@ function getHUC(lat,lon){
                         }
                     }
     var myStyle = {
-        "color": "green",
-        "weight": 2,
-        "opacity": 0.5
+        "color": "blue",
+        "weight": 0,
+        "fillOpacity": 0.3
     };
-    if(typeof(layersByName['wbdLayer'] ) != 'undefined'){
-        map.removeLayer(layersByName['wbdLayer']);
-    }
 
-    var showInfo = ['AREASQKM','NAME','HUC10','HUC6','HUC8'];
+
+    var showInfo = ['AREASQKM','NAME'];
      $.ajax({
             type: "GET",
-            url: "https://services.nationalmap.gov/arcgis/rest/services/wbd/MapServer/identify",
+            url: "https://hydro.nationalmap.gov/arcgis/rest/services/wbd/MapServer/identify",
             data: params,
             contentType: "application/json; charset=utf-8",
             headers : {'Content-Type' : 'application/x-www-form-urlencoded; charset=UTF-8'},
@@ -680,10 +701,10 @@ function getHUC(lat,lon){
             success: function (data) {
                 $.each(data.results,function(){
                     var geoJSON = arcgisToGeoJSON(this);
-                    flowLines.features.push(geoJSON);
+                    wbdpolys.features.push(geoJSON);
                 });
 
-                var markers = L.Proj.geoJson(flowLines, {
+                var polygon = L.Proj.geoJson(wbdpolys, {
                     style: myStyle,
                     onEachFeature: function (feature, layer) {
                         var popupcontent = "<h4>Information from  National Map WBD</h4>";
@@ -700,10 +721,9 @@ function getHUC(lat,lon){
                         layer.bindPopup(popupcontent);
                         }
                 });
-                map.addLayer(markers);
-                mapControl.addOverlay(markers, "HUC Basins");
 
-                layersByName['wbdLayer'] = markers;
+                polygon.addTo(wbdLayers);
+
                 $.each(data.results,function(){
                     huc = (this.layerId-1)*2;
                     $('#siteInfo').append(this.layerName+': '+this.value+' '+this.attributes['HUC'+huc]+'<br>');
@@ -802,8 +822,9 @@ function streamer(lat,lon){
                             });
                         }
                     });
-                    map.addLayer(markers);
-                    mapControl.addOverlay(markers, "Selected Stream Reach");
+
+                    markers.addTo(streamLines);
+                    //mapControl.addOverlay(markers, "Selected Stream Reach");
 
                     layersByName['reachLayer'] = markers;
                     var layers = markers.getLayers();
@@ -898,9 +919,19 @@ function streamer(lat,lon){
        </table>
         <i>Text above is matched to river names in the USGS 1:1,000,000 river dataset.  Check and see how many Fish or Beaver Creeks exist in Alaska!</i><br>
         <i>Use the cross hairs to click a point and find the nearest:<br>
-            <input type="radio" name="type" value="river" checked="checked"> River Reach<br>
-            <input type="radio" name="type" value="huc"> HUC basins<br>
-        <button type="button" onclick ="$.each(layersByName,function(k,v){console.log(v);map.removeLayer(v);mapControl.removeLayer(v);});$( '#foundRivers' ).hide();">Clear Map</button>
+
+                <p class="blocktext">
+                <input type="radio" name="type" value="river" checked="checked"> River Reach<br>
+                <input type="radio" name="type" value="huc"> HUC basins
+                <span class="hucScale">
+                    <input type="checkbox" name="HUC6" /> HUC6
+                    <input type="checkbox" name="HUC8" checked="checked" /> HUC8
+                    <input type="checkbox" name="HUC10"  /> HUC10
+                    <input type="checkbox" name="HUC12"  /> HUC12
+                </span>
+                </p>
+
+        <button type="button" onclick ="clearMap(map);">Clear Map</button>
     </div>
     <center>Basemap data and search capabilities provided by the USGS Streamer team.  For more information visit: <a href="https://txgeo.usgs.gov/DSS/streamer/web/">https://txgeo.usgs.gov/DSS/streamer/web/</a></center>
     <div class="maincontainer">
@@ -952,7 +983,6 @@ if(zoom == null){
 // create map with ESRI World Terrain Base, Streamer Ocean, Streamer HydroBaseMapForTerrain, and Streamer Mask layers
 map = new L.Map( "mapid", {
     "minZoom" : 4,
-   // "maxZoom" : 11,
     "layers"  : [Esri_WorldImagery,esriTopo,usgsTopo,hydroBase],
     "center"  : new L.LatLng(lat,lon),
     "zoom"    : zoom,
@@ -966,13 +996,140 @@ var baseMaps = {
     "Hydrography" : hydroBase,
 };
 
+map.createPane('labels');
+map.getPane('labels').style.zIndex = 650;
+map.getPane('labels').style.pointerEvents = 'none';
+
+var wmsCityLayer = L.tileLayer.wms('http://tiles1.dnr.alaska.gov/service?', {
+    layers: 'dnr:MV_TOWN_L',
+    transparent: true,
+    pane: 'labels'
+}).addTo(map);
+
+var wmsPlacesLayer = L.tileLayer.wms('http://tiles1.dnr.alaska.gov/service?', {
+    layers: 'dnr:MV_USGS_PLACE_NAMES_L',
+    transparent: true,
+    pane: 'labels'
+});
+
+
+
 var mapControl = L.control.layers(baseMaps,null).addTo(map);
-L.control.coordinates(
+
+mapControl.addOverlay(wmsCityLayer,"Cities and Towns");
+mapControl.addOverlay(wmsPlacesLayer,"USGS Place Names");
+
+map.addLayer(wbdLayers);
+mapControl.addOverlay(wbdLayers, "WBD Layer");
+
+map.addLayer(drawnItems);
+mapControl.addOverlay(drawnItems, "Drawn Items");
+
+map.addLayer(streamLines);
+mapControl.addOverlay(streamLines, "Highlighted Rivers");
+
+L.control.betterscale({ maxWidth: 300}).addTo(map);
+
+
+
+var coordsDisplay = L.control.coordinates(
     {labelTemplateLat:"Lat: {y}",
 	labelTemplateLng:"Lon: {x}"}).addTo(map);
 
 
+
+var drawControl = new L.Control.Draw({
+    position: 'topright',
+    draw: {
+
+        polyline: {
+        	shapeOptions: {
+				color: 'red',
+				weight: 3,
+				opacity: 1,
+			}
+		},
+        rectangle: false,
+        polygon: {
+            allowIntersection: true,
+            showArea: true,
+            drawError: {
+                color: '#b00b00',
+                timeout: 1000
+            },
+            shapeOptions: {
+                color: 'red',
+                opacity: 1,
+                fillOpacity: 0.3,
+                weight: 3
+            }
+        },
+        circle: false
+    },
+    edit: {
+        featureGroup: drawnItems,
+        remove: true
+    }
+});
+
+map.addControl(drawControl);
+
+map.on('draw:created', function (e) {
+    var type = e.layerType,
+        layer = e.layer;
+
+    if (type === 'marker') {
+        layer.bindPopup('A popup!');
+    }
+
+    drawnItems.addLayer(layer);
+});
+
+map.on('draw:drawstart',function(e){
+    drawing = true;
+});
+
+map.on('draw:drawstop',function(e){
+    drawing = false;
+});
+
+map.on('draw:deletestart',function(e){
+    drawing = true;
+});
+
+map.on('draw:deletestop',function(e){
+    drawing = false;
+});
+
+map.on('draw:editstart',function(e){
+    drawing = true;
+});
+
+map.on('draw:editstop',function(e){
+    drawing = false;
+});
+
+
+
 $('.leaflet-container').css('cursor','crosshair');
+
+function clearMap(thisMap){
+    console.log('clearing map');
+    wbdLayers.eachLayer(function(layer) {
+        wbdLayers.removeLayer(layer);
+        thisMap.removeLayer(layer);
+    });
+    drawnItems.eachLayer(function(layer) {
+        thisMap.removeLayer(layer);
+        drawnItems.removeLayer(layer);
+    });
+    streamLines.eachLayer(function(layer) {
+        thisMap.removeLayer(layer);
+        streamLines.removeLayer(layer);
+    });
+    $('#foundRivers').html('');
+
+    }
 
 function checkVisible(elm) {
   var rect = elm.getBoundingClientRect();
@@ -984,7 +1141,9 @@ var river = getParameterByName('riverSearch');
 var match = getParameterByName('match');
 
 var state = getParameterByName('state');
-if(state.length > 0) $("#state").val(state);
+if(state != null){
+    if(state.length > 0) $("#state").val(state);
+}
 
 if(river != null){
     $('#riverSearch').val(river);
@@ -1011,9 +1170,17 @@ map.on('dragend', function() {
 });
 
 
+map.on('mouseout',function(e){
+    coordsDisplay.remove(map);
+});
 
+map.on('mouseover',function(e){
+    coordsDisplay.addTo(map);
+});
 
 map.on('click', function(e) {
+    if(drawing == true) return;
+    console.log('map click');
     jQuery("#loading-image").css('visibility', 'visible');
 
     if($('input[name="type"]:checked').val() == 'huc') {
